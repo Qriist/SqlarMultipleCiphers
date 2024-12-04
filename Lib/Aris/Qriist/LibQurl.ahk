@@ -1,0 +1,1 @@
+﻿#include .\LibQurl@v0.81.3\Lib\LibQurl.ahk

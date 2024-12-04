@@ -1,0 +1,6 @@
+﻿{
+	"dependencies": {
+		"G33kDude/cJson": "^2.0.0",
+		"Qriist/LibQurl": "github:Qriist/LibQurl@^v0.81.3 --main Lib\\LibQurl.ahk"
+	}
+}
