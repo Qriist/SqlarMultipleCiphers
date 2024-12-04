@@ -29,18 +29,16 @@ EnvSet("LIBICU_PATH", icuDir) ;temporarily set the ICU dll path
 
 ;update the SQLite3MultipleCiphers submodule
 MCpath := A_ScriptDir "\MC\build"
-;todo - git stuff
+;todo - git ~things~
 
 ;clean and build the MC DLLs
 targetsolution := "sqlite3mc_vc17.sln"
-
 releaseConfig := "/p:Configuration=Release /p:Platform=Win64"
 SqlarPreprocessor := '/p:DefineConstants="SQLITE3MC_USE_MINIZ=1;SQLITE_ENABLE_COMPRESS=1;SQLITE_ENABLE_SQLAR=1;SQLITE_ENABLE_ZIPFILE=1"'
 
 cleanCmd := "msbuild " targetsolution " /t:Clean " releaseConfig " " SqlarPreprocessor
 buildCmd := "msbuild " targetsolution " " releaseConfig " " SqlarPreprocessor
 
-; releaseConfig := 
 ;comspec was giving me grief, this was easier
 FileOpen(A_ScriptDir "\build.bat","w").Write(cleanCmd "`n" buildCmd)
 RunWait(A_ScriptDir "\build.bat",MCpath)
@@ -59,11 +57,12 @@ _7zcmd := _7zexe " a -mx=9 -sdel "
 built := A_ScriptDir "\built\"
 loop files built "*" , "D"
     DirDelete(A_LoopFileFullPath,1)
+FileDelete(A_ScriptDir "\built\*.7z")
 for k,v in [""," ICU"] {
     ICU := v
     for k,v in [""," UPX"]{
         UPX := v
-        targetDir := built "MC" ICU UPX
+        targetDir := built "SqlarMultipleCiphers" ICU UPX
         DirCreate(targetDir)
         for k,v in (ICU=""?sqnICU:sqyICU){
             SplitPath(v,&FileName)
@@ -76,9 +75,11 @@ for k,v in [""," ICU"] {
             If (UPX!="")
                 RunWait(upxcmd Chr(34) targetFile Chr(34))
         }
-        ; msgbox A_Clipboard := _7zcmd chr(34) targetDir Chr(34) " " Chr(34) "MC" ICU UPX ".7z" chr(34)
+        ; msgbox A_Clipboard :=_7zcmd " " Chr(34) "SqlarMultipleCiphers" ICU UPX ".7z" chr(34) " " chr(34) targetDir Chr(34)
         try
-            FileDelete(built "MC" ICU UPX ".7z")
-        RunWait(_7zcmd " " Chr(34) "MC" ICU UPX ".7z" chr(34) " " chr(34) targetDir Chr(34),built)
+            FileDelete(built "SqlarMultipleCiphers" ICU UPX ".7z")
+        RunWait(_7zcmd " " Chr(34) "SqlarMultipleCiphers" ICU UPX ".7z" chr(34) " " chr(34) targetDir Chr(34),built)
     }
 }
+
+;todo - push a release
