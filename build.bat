@@ -1,0 +1,2 @@
+msbuild sqlite3mc_vc17.sln /t:Clean /p:Configuration=Release /p:Platform=Win64 /p:DefineConstants="SQLITE3MC_USE_MINIZ=1;SQLITE_ENABLE_COMPRESS=1;SQLITE_ENABLE_SQLAR=1;SQLITE_ENABLE_ZIPFILE=1"
+msbuild sqlite3mc_vc17.sln /p:Configuration=Release /p:Platform=Win64 /p:DefineConstants="SQLITE3MC_USE_MINIZ=1;SQLITE_ENABLE_COMPRESS=1;SQLITE_ENABLE_SQLAR=1;SQLITE_ENABLE_ZIPFILE=1"
