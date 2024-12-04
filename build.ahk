@@ -23,6 +23,7 @@ icuDir := A_ScriptDir "\bin\icu-precompiled\current"
 DirCopy(latestDir,icuDir,1)
 
 
+
 EnvSet("LIBICU_PATH", icuDir) ;temporarily set the ICU dll path
 ; MsgBox "LIBICU_PATH set to: " EnvGet("LIBICU_PATH")
 
