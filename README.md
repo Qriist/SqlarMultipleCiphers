@@ -1,6 +1,6 @@
 # SqlarMultipleCiphers
-Auto-built DLLs of SQLite3MultipleCiphers, with the SQLite Archive functions enabled.
+Auto-built DLLs of @utelle's SQLite3MultipleCiphers, with the SQLite Archive functions enabled.
 
-Full automation/releasing is in the works, but for now you can grab the dlls in the `built` folder.
+All versions come with the Sqlar functions by default, and also some combination of being ICU-enabled and/or/nor UPX-packed.
 
-All DLLs come with the Sqlar functions, but also some combination of being ICU-enabled and/or/nor UPX-packed.
+Full automation/releasing is in the works, but for now you can grab whichever flavor of dlls you need from the `built` folder.
