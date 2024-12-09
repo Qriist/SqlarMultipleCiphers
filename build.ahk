@@ -28,8 +28,9 @@ EnvSet("LIBICU_PATH", icuDir) ;temporarily set the ICU dll path
 ; MsgBox "LIBICU_PATH set to: " EnvGet("LIBICU_PATH")
 
 ;update the SQLite3MultipleCiphers submodule
-MCpath := A_ScriptDir "\MC\build"
-RunWait("git submodule update --remote")
+MCpath := A_ScriptDir "\MC\"
+MCpathToBuild := A_ScriptDir "\MC\build"
+; RunWait("git submodule update --remote")
 
 
 ;todo - git ~things~
@@ -44,7 +45,7 @@ buildCmd := "msbuild " targetsolution " " releaseConfig " " SqlarPreprocessor
 
 ;comspec was giving me grief, this was easier
 FileOpen(A_ScriptDir "\build.bat","w").Write(cleanCmd "`n" buildCmd)
-RunWait(A_ScriptDir "\build.bat",MCpath)
+RunWait(A_ScriptDir "\build.bat",MCpathToBuild)
 
 ;sort the dlls into the correct locations
 MCreleaseDir := A_ScriptDir "\MC\bin\vc17\dll\release"
