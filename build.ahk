@@ -1,7 +1,7 @@
 ﻿#Requires AutoHotkey v2.1-alpha.14
 #include <Aris/Qriist/LibQurl>
 #include <Aris/g33kdude/cjson> ; g33kdude/cjson@2.0.0
-
+SetWorkingDir(A_ScriptDir)
 ;update the ICU DLLs
 curl := LibQurl()
 curl.register(0)
@@ -29,6 +29,9 @@ EnvSet("LIBICU_PATH", icuDir) ;temporarily set the ICU dll path
 
 ;update the SQLite3MultipleCiphers submodule
 MCpath := A_ScriptDir "\MC\build"
+RunWait("git submodule update --remote")
+
+
 ;todo - git ~things~
 
 ;clean and build the MC DLLs

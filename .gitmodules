@@ -1,3 +1,5 @@
 [submodule "MC"]
 	path = MC
 	url = https://github.com/utelle/SQLite3MultipleCiphers.git
+	branch = main
+	
