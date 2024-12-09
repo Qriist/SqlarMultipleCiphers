@@ -1,0 +1,5 @@
+*.log
+*.vcxproj
+*.bat
+*.tlog
+*.lastbuildstate
