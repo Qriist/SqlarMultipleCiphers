@@ -28,8 +28,12 @@ EnvSet("LIBICU_PATH", icuDir) ;temporarily set the ICU dll path
 ; MsgBox "LIBICU_PATH set to: " EnvGet("LIBICU_PATH")
 
 ;update the SQLite3MultipleCiphers submodule
-MCpath := A_ScriptDir "\MC\"
-MCpathToBuild := A_ScriptDir "\MC\build"
+MCpath := A_ScriptDir "\SQLite3MultipleCiphers\"
+MCpathToBuild := A_ScriptDir "\SQLite3MultipleCiphers\build\"
+RunWait("git submodule update --remote --force --merge")
+RunWait("git add SQLite3MultipleCiphers")
+RunWait('git commit -m "Force update all submodules to latest commits"')
+RunWait("git push origin master")
 ; RunWait("git submodule update --remote")
 
 
@@ -48,7 +52,7 @@ FileOpen(A_ScriptDir "\build.bat","w").Write(cleanCmd "`n" buildCmd)
 RunWait(A_ScriptDir "\build.bat",MCpathToBuild)
 
 ;sort the dlls into the correct locations
-MCreleaseDir := A_ScriptDir "\MC\bin\vc17\dll\release"
+MCreleaseDir := A_ScriptDir "\SQLite3MultipleCiphers\bin\vc17\dll\release"
 sqnICU := [MCreleaseDir "\sqlite3mc_x64.dll"]
 sqyICU := [MCreleaseDir "\sqlite3mc_icu_x64.dll"]
 loop files icuDir "\bin64\icu*.dll"
@@ -87,3 +91,7 @@ for k,v in [""," ICU"] {
 }
 
 ;todo - push a release
+/*
+    follow this template:
+    gh release create "v1.9.2" "built\SqlarMultipleCiphers ICU UPX.7z" "built\SqlarMultipleCiphers ICU.7z" "built\SqlarMultipleCiphers UPX.7z" "built\SqlarMultipleCiphers.7z"   --title "SqlarMultipleCiphers v1.9.2" --notes "Built from: SQLite3 Multiple Ciphers 1.9.2 (based on SQLite 3.47.2)"
+*/
