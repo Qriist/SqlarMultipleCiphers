@@ -2,29 +2,43 @@
 #include <Aris/Qriist/LibQurl>
 #include <Aris/g33kdude/cjson> ; g33kdude/cjson@2.0.0
 SetWorkingDir(A_ScriptDir)
-;update the ICU DLLs
 curl := LibQurl()
-;NOTE: auto-update skipped for now, will write this later
 
-;clean the ICU DLLs
-;todo - make conditional based on if ICU was updated
-try
-    DirDelete(A_ScriptDir "\bin\icu-precompiled\current",1)
+;update the ICU DLLs
+url := "https://api.github.com/repos/unicode-org/icu/releases/latest"
+curl.SetOpt("URL",url)
+useragent := "Mozilla/5.0 (platform; rv:gecko-version) Gecko/gecko-trail Firefox/firefox-version"
+curl.SetOpt("USERAGENT",useragent)  ;github freaks out if you lack useragent
+curl.Sync()
 
-;determine the latest ICU directory
-loop files A_ScriptDir "\bin\icu-precompiled\*" , "D"
-    If (A_LoopFileName = "current")
+jsonObj := JSON.load(curl.GetLastBody())
+for k,v in jsonObj["assets"] {
+    If !RegExMatch(v["name"],"(.+Win64.+\.zip)$")
         continue
-    else
-        latestDir := A_LoopFileFullPath
+    zipName := v["name"]
+    browser_download_url := v["browser_download_url"]
+    break
+}
+
+zipPath := A_ScriptDir "\bin\icu-precompiled"
+If !FileExist(zipPath "\" zipName) {
+    FileDelete(zipPath "\*")
+    try DirDelete(zipPath "\current",1)
+    DirCreate(zipPath "\current")
+
+    curl.SetOpt("URL",browser_download_url)
+    curl.WriteToFile(zipPath "\" zipName)
+    curl.Sync()
+    curl.GetLastBody("File").Close()    ;7z demands exclusive access
+    
+    cmd7z := A_ScriptDir "\tools\7za.exe x " '"' zipPath "\" zipName '"' " -o" zipPath "\current\"
+    RunCMD(cmd7z)
+}
+
 icuDir := A_ScriptDir "\bin\icu-precompiled\current"
-
-DirCopy(latestDir,icuDir,1)
-
-
-
 EnvSet("LIBICU_PATH", icuDir) ;temporarily set the ICU dll path
 ; MsgBox "LIBICU_PATH set to: " EnvGet("LIBICU_PATH")
+
 
 ;update the SQLite3MultipleCiphers submodule
 MCpath := A_ScriptDir "\SQLite3MultipleCiphers\"
