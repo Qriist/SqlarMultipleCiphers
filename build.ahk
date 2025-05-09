@@ -4,7 +4,6 @@
 SetWorkingDir(A_ScriptDir)
 ;update the ICU DLLs
 curl := LibQurl()
-curl.register(0)
 ;NOTE: auto-update skipped for now, will write this later
 
 ;clean the ICU DLLs

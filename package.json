@@ -1,6 +1,8 @@
 ﻿{
 	"dependencies": {
 		"G33kDude/cJson": "^2.0.0",
-		"Qriist/LibQurl": "github:Qriist/LibQurl@^v0.81.3 --main Lib\\LibQurl.ahk"
+		"Qriist/LibQurl": "^v0.94.0",
+		"Qriist/libmagic": "github:Qriist/libmagic@^v0.80.0 --main Lib\\libmagic.ahk",
+		"Skan/runcmd": "aadeb56"
 	}
 }
