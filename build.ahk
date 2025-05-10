@@ -55,6 +55,11 @@ currentMcVersion := mcObj["tag_name"]
 currentMcName := mcObj["name"]
 buildIni := A_ScriptDir "\build.ini"
 savedMcVersion := IniRead(buildIni,"build","savedMcVersion",0)
+savedSqlarVersion := IniRead(buildIni,"build","savedSqlarVersion",0)
+
+If (currentMcVersion = savedMcVersion)
+&& (currentMcVersion = savedSqlarVersion)
+    ExitApp
 
 ;update the submodule to latest release, if needed
 if (currentMcVersion != savedMcVersion){
@@ -139,13 +144,11 @@ for k,v in [""," ICU"] {
     }
 }
 
-savedSqlarVersion := IniRead(A_ScriptDir "\build.ini","build","savedSqlarVersion",0)
 If (savedMcVersion != savedSqlarVersion){
     gh := "gh release create " '"' savedMcVersion '"' A_Space
         .   adash.join(editions,A_Space) A_Space
         .   ' --title "SqlarMultipleCiphers ' savedMcVersion ' "' A_Space
         .   ' --notes "Built from: ' currentMcName '"'
-        A_Clipboard := gh
-    msgbox RunWait(gh,A_ScriptDir "\built")
-    IniWrite(savedMcVersion, A_ScriptDir "\build.ini","build","savedSqlarVersion")
+    If !RunWait(gh,A_ScriptDir "\built")
+        IniWrite(savedMcVersion, A_ScriptDir "\build.ini","build","savedSqlarVersion")
 }
