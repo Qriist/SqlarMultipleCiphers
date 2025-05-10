@@ -5,16 +5,58 @@
 SetWorkingDir(A_ScriptDir)
 curl := LibQurl()
 
- ;locks all RunWaits to one console window
+;determine the latest SQLite3MultipleCiphers source code
+;this is done before creating the first cmd window to prevent flashes if there's nothing to do
+useragent := "Mozilla/5.0 (platform; rv:gecko-version) Gecko/gecko-trail Firefox/firefox-version"
+curl.SetOpt("USERAGENT",useragent)  ;github freaks out if you lack useragent
+url := "https://api.github.com/repos/utelle/SQLite3MultipleCiphers/releases/latest"
+curl.SetOpt("URL",url)
+curl.Sync()
+mcObj := JSON.Load(curl.GetLastBody())
+currentMcVersion := mcObj["tag_name"]
+currentMcName := mcObj["name"]
+buildIni := A_ScriptDir "\build.ini"
+savedMcVersion := IniRead(buildIni,"build","savedMcVersion",0)
+savedSqlarVersion := IniRead(buildIni,"build","savedSqlarVersion",0)
+
+If (currentMcVersion = savedMcVersion)
+&& (currentMcVersion = savedSqlarVersion)
+    ExitApp
+
+
+;locks all RunWaits to one console window
 DllCall("AllocConsole")
 hConsoleOut := DllCall("GetStdHandle", "uint", -11)
 
+;update the submodule to latest release, if needed
+if (currentMcVersion != savedMcVersion){
+    MCpath := A_ScriptDir "\SQLite3MultipleCiphers\"
+    MCpathToBuild := A_ScriptDir "\SQLite3MultipleCiphers\build\"
 
-;update the ICU DLLs
+    ;todo: migrate to api
+    RunWait("git checkout tags/" currentMcVersion,MCpath)
+    RunWait("git add SQLite3MultipleCiphers")
+    RunWait('git commit -m "Updated SQLite3MultipleCiphers to ' currentMcVersion '"')
+    RunWait("git push origin master")
+    IniWrite(currentMcVersion,buildIni,"build","savedMcVersion")
+    savedMcVersion := currentMcVersion
+}
+
+;update the SQLite3MultipleCiphers submodule
+MCpath := A_ScriptDir "\SQLite3MultipleCiphers\"
+MCpathToBuild := A_ScriptDir "\SQLite3MultipleCiphers\build\"
+/*  old mode, waiting until next release to test
+RunWait("git submodule update --remote --force --merge")
+RunWait("git add SQLite3MultipleCiphers")
+RunWait('git commit -m "Force update all submodules to latest commits"')
+RunWait("git push origin master")
+; RunWait("git submodule update --remote")
+*/
+
+
+;update the ICU DLLs before building MC DLLs
 url := "https://api.github.com/repos/unicode-org/icu/releases/latest"
 curl.SetOpt("URL",url)
-useragent := "Mozilla/5.0 (platform; rv:gecko-version) Gecko/gecko-trail Firefox/firefox-version"
-curl.SetOpt("USERAGENT",useragent)  ;github freaks out if you lack useragent
 curl.Sync()
 
 jsonObj := JSON.load(curl.GetLastBody())
@@ -46,43 +88,7 @@ EnvSet("LIBICU_PATH", icuDir) ;temporarily set the ICU dll path
 ; MsgBox "LIBICU_PATH set to: " EnvGet("LIBICU_PATH")
 
 
-;determine the latest SQLite3MultipleCiphers source code
-url := "https://api.github.com/repos/utelle/SQLite3MultipleCiphers/releases/latest"
-curl.SetOpt("URL",url)
-curl.Sync()
-mcObj := JSON.Load(curl.GetLastBody())
-currentMcVersion := mcObj["tag_name"]
-currentMcName := mcObj["name"]
-buildIni := A_ScriptDir "\build.ini"
-savedMcVersion := IniRead(buildIni,"build","savedMcVersion",0)
-savedSqlarVersion := IniRead(buildIni,"build","savedSqlarVersion",0)
 
-If (currentMcVersion = savedMcVersion)
-&& (currentMcVersion = savedSqlarVersion)
-    ExitApp
-
-;update the submodule to latest release, if needed
-if (currentMcVersion != savedMcVersion){
-    MCpath := A_ScriptDir "\SQLite3MultipleCiphers\"
-    MCpathToBuild := A_ScriptDir "\SQLite3MultipleCiphers\build\"
-    RunWait("git checkout tags/" currentMcVersion,MCpath)
-    RunWait("git add SQLite3MultipleCiphers")
-    RunWait('git commit -m "Updated SQLite3MultipleCiphers to ' currentMcVersion '"')
-    RunWait("git push origin master")
-    IniWrite(currentMcVersion,buildIni,"build","savedMcVersion")
-    savedMcVersion := currentMcVersion
-}
-
-;update the SQLite3MultipleCiphers submodule
-MCpath := A_ScriptDir "\SQLite3MultipleCiphers\"
-MCpathToBuild := A_ScriptDir "\SQLite3MultipleCiphers\build\"
-/*  old mode, waiting until next release to test
-RunWait("git submodule update --remote --force --merge")
-RunWait("git add SQLite3MultipleCiphers")
-RunWait('git commit -m "Force update all submodules to latest commits"')
-RunWait("git push origin master")
-; RunWait("git submodule update --remote")
-*/
 
 
 ;clean and build the MC DLLs
@@ -145,6 +151,7 @@ for k,v in [""," ICU"] {
 }
 
 If (savedMcVersion != savedSqlarVersion){
+    ;todo: migrate to api
     gh := "gh release create " '"' savedMcVersion '"' A_Space
         .   adash.join(editions,A_Space) A_Space
         .   ' --title "SqlarMultipleCiphers ' savedMcVersion ' "' A_Space
