@@ -4,3 +4,4 @@
 #include .\Qriist\libmagic.ahk ; github:Qriist/libmagic@v0.80.0 --main Lib\libmagic.ahk
 #include .\Skan\runcmd.ahk ; Skan/runcmd@aadeb56
 #include .\Qriist\LibQurl.ahk ; Qriist/LibQurl@v0.94.0
+#include .\Chunjee\adash.ahk ; Chunjee/adash@v0.6.0

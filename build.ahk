@@ -1,8 +1,14 @@
 ﻿#Requires AutoHotkey v2.1-alpha.14
 #include <Aris/Qriist/LibQurl>
 #include <Aris/g33kdude/cjson> ; g33kdude/cjson@2.0.0
+#include <Aris/Chunjee/adash> ; Chunjee/adash@v0.6.0
 SetWorkingDir(A_ScriptDir)
 curl := LibQurl()
+
+ ;locks all RunWaits to one console window
+DllCall("AllocConsole")
+hConsoleOut := DllCall("GetStdHandle", "uint", -11)
+
 
 ;update the ICU DLLs
 url := "https://api.github.com/repos/unicode-org/icu/releases/latest"
@@ -31,8 +37,8 @@ If !FileExist(zipPath "\" zipName) {
     curl.Sync()
     curl.GetLastBody("File").Close()    ;7z demands exclusive access
     
-    cmd7z := A_ScriptDir "\tools\7za.exe x " '"' zipPath "\" zipName '"' " -o" zipPath "\current\"
-    RunCMD(cmd7z)
+    _7zcmd := A_ScriptDir "\tools\7za.exe x " '"' zipPath "\" zipName '"' " -o" zipPath "\current\"
+    RunWait(_7zcmd)
 }
 
 icuDir := A_ScriptDir "\bin\icu-precompiled\current"
@@ -40,29 +46,57 @@ EnvSet("LIBICU_PATH", icuDir) ;temporarily set the ICU dll path
 ; MsgBox "LIBICU_PATH set to: " EnvGet("LIBICU_PATH")
 
 
+;determine the latest SQLite3MultipleCiphers source code
+url := "https://api.github.com/repos/utelle/SQLite3MultipleCiphers/releases/latest"
+curl.SetOpt("URL",url)
+curl.Sync()
+mcObj := JSON.Load(curl.GetLastBody())
+currentMcVersion := mcObj["tag_name"]
+currentMcName := mcObj["name"]
+buildIni := A_ScriptDir "\build.ini"
+savedMcVersion := IniRead(buildIni,"build","savedMcVersion",0)
+
+;update the submodule to latest release, if needed
+if (currentMcVersion != savedMcVersion){
+    MCpath := A_ScriptDir "\SQLite3MultipleCiphers\"
+    MCpathToBuild := A_ScriptDir "\SQLite3MultipleCiphers\build\"
+    RunWait("git checkout tags/" currentMcVersion,MCpath)
+    RunWait("git add SQLite3MultipleCiphers")
+    RunWait('git commit -m "Updated SQLite3MultipleCiphers to ' currentMcVersion '"')
+    RunWait("git push origin master")
+    IniWrite(currentMcVersion,buildIni,"build","savedMcVersion")
+    savedMcVersion := currentMcVersion
+}
+
 ;update the SQLite3MultipleCiphers submodule
 MCpath := A_ScriptDir "\SQLite3MultipleCiphers\"
 MCpathToBuild := A_ScriptDir "\SQLite3MultipleCiphers\build\"
+/*  old mode, waiting until next release to test
 RunWait("git submodule update --remote --force --merge")
 RunWait("git add SQLite3MultipleCiphers")
 RunWait('git commit -m "Force update all submodules to latest commits"')
 RunWait("git push origin master")
 ; RunWait("git submodule update --remote")
+*/
 
-
-;todo - git ~things~
 
 ;clean and build the MC DLLs
 targetsolution := "sqlite3mc_vc17.sln"
 releaseConfig := "/p:Configuration=Release /p:Platform=Win64"
-SqlarPreprocessor := '/p:DefineConstants="SQLITE3MC_USE_MINIZ=1;SQLITE_ENABLE_COMPRESS=1;SQLITE_ENABLE_SQLAR=1;SQLITE_ENABLE_ZIPFILE=1"'
 
-cleanCmd := "msbuild " targetsolution " /t:Clean " releaseConfig " " SqlarPreprocessor
-buildCmd := "msbuild " targetsolution " " releaseConfig " " SqlarPreprocessor
+sqlarConsts := [
+    "SQLITE3MC_USE_MINIZ=1",
+    "SQLITE_ENABLE_COMPRESS=1",
+    "SQLITE_ENABLE_SQLAR=1",
+    "SQLITE_ENABLE_ZIPFILE=1"
+]
+SqlarPreprocessor := '/p:DefineConstants="' adash.join(sqlarConsts,";") '"'
 
-;comspec was giving me grief, this was easier
-FileOpen(A_ScriptDir "\build.bat","w").Write(cleanCmd "`n" buildCmd)
-RunWait(A_ScriptDir "\build.bat",MCpathToBuild)
+cleanCmd := "msbuild " targetsolution " /t:Clean "  releaseConfig " " SqlarPreprocessor
+buildCmd := "msbuild " targetsolution " "           releaseConfig " " SqlarPreprocessor
+
+RunWait(cleanCmd,MCpathToBuild)
+RunWait(buildCmd,MCpathToBuild)
 
 ;sort the dlls into the correct locations
 MCreleaseDir := A_ScriptDir "\SQLite3MultipleCiphers\bin\vc17\dll\release"
@@ -79,6 +113,7 @@ built := A_ScriptDir "\built\"
 loop files built "*" , "D"
     DirDelete(A_LoopFileFullPath,1)
 FileDelete(A_ScriptDir "\built\*.7z")
+editions := []
 for k,v in [""," ICU"] {
     ICU := v
     for k,v in [""," UPX"]{
@@ -93,18 +128,24 @@ for k,v in [""," ICU"] {
                 continue
             targetFile := targetDir "\" FileName
             FileCopy(v,targetFile)
-            If (UPX!="")
+            If (UPX!="") 
                 RunWait(upxcmd Chr(34) targetFile Chr(34))
         }
         ; msgbox A_Clipboard :=_7zcmd " " Chr(34) "SqlarMultipleCiphers" ICU UPX ".7z" chr(34) " " chr(34) targetDir Chr(34)
-        try
-            FileDelete(built "SqlarMultipleCiphers" ICU UPX ".7z")
-        RunWait(_7zcmd " " Chr(34) "SqlarMultipleCiphers" ICU UPX ".7z" chr(34) " " chr(34) targetDir Chr(34),built)
+        ; try FileDelete(built "SqlarMultipleCiphers" ICU UPX ".7z")
+        edition := "SqlarMultipleCiphers " savedMcVersion ((ICU UPX)=""?"":" (" Trim(ICU UPX) ")")
+        editions.Push('"' edition ".7z" '"')        
+        RunWait(_7zcmd " " Chr(34) edition ".7z" chr(34) " " chr(34) targetDir Chr(34),built)
     }
 }
 
-;todo - push a release
-/*
-    follow this template:
-    gh release create "v1.9.2" "built\SqlarMultipleCiphers ICU UPX.7z" "built\SqlarMultipleCiphers ICU.7z" "built\SqlarMultipleCiphers UPX.7z" "built\SqlarMultipleCiphers.7z"   --title "SqlarMultipleCiphers v1.9.2" --notes "Built from: SQLite3 Multiple Ciphers 1.9.2 (based on SQLite 3.47.2)"
-*/
+savedSqlarVersion := IniRead(A_ScriptDir "\build.ini","build","savedSqlarVersion",0)
+If (savedMcVersion != savedSqlarVersion){
+    gh := "gh release create " '"' savedMcVersion '"' A_Space
+        .   adash.join(editions,A_Space) A_Space
+        .   ' --title "SqlarMultipleCiphers ' savedMcVersion ' "' A_Space
+        .   ' --notes "Built from: ' currentMcName '"'
+        A_Clipboard := gh
+    msgbox RunWait(gh,A_ScriptDir "\built")
+    IniWrite(savedMcVersion, A_ScriptDir "\build.ini","build","savedSqlarVersion")
+}
