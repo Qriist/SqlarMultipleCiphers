@@ -1,5 +1,4 @@
 built
-SQLite3MultipleCiphers
 bin/icu-precompiled/*
 !bin/icu-precompiled/current
 lib/Aris
