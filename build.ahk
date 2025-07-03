@@ -34,10 +34,13 @@ if (currentMcVersion != savedMcVersion){
     MCpathToBuild := A_ScriptDir "\SQLite3MultipleCiphers\build\"
 
     ;todo: migrate to api
-    RunWait("git checkout tags/v" currentMcVersion,MCpath)
-    RunWait("git add SQLite3MultipleCiphers")
-    RunWait('git commit -m "Updated SQLite3MultipleCiphers to ' currentMcVersion '"')
-    RunWait("git push origin master")
+    RunWait("git fetch --tags",MCpath)
+    RunWait("git checkout " currentMcVersion,MCpath)
+    ; RunWait("git add SQLite3MultipleCiphers")
+    ; RunWait('git commit -m "Updated SQLite3MultipleCiphers to ' currentMcVersion '"')
+    ; RunWait("git push origin master")
+    ; MsgBox
+    ; ExitApp
     IniWrite(currentMcVersion,buildIni,"build","savedMcVersion")
     savedMcVersion := currentMcVersion
 }
